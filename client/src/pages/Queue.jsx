@@ -40,7 +40,18 @@ const Queue = () => {
                     b.type === 'queue'
                 );
                 const myPos = queueForBarber.findIndex(b => b.id === bookingId) + 1;
-                setBooking(prev => ({ ...prev, currentPosition: myPos || myBooking.position }));
+
+                // Check if barber is currently busy with someone else "on chair"
+                const isBarberBusy = bookingsRes.data.some(b =>
+                    b.barber_id === myBooking.barber_id &&
+                    b.status === 'on_chair'
+                );
+
+                setBooking(prev => ({
+                    ...prev,
+                    currentPosition: myPos || myBooking.position,
+                    isBarberBusy
+                }));
             }
         } catch (err) {
             console.error('Error fetching queue status:', err);
@@ -75,7 +86,11 @@ const Queue = () => {
         </div>
     );
 
-    const waitTime = booking.currentPosition ? booking.currentPosition * 15 : 0; // Rough estimate
+    // Dynamic wait time calculation:
+    // 0 if already on chair, 1 minute if first in line and barber is free, otherwise 15 min per position
+    const waitTime = (booking.status === 'on_chair') ? 0
+        : (booking.currentPosition === 1 && !booking.isBarberBusy) ? 1
+            : (booking.currentPosition || 0) * 15;
 
     return (
         <div className="min-h-screen bg-dark text-white flex flex-col p-6 font-sans">
