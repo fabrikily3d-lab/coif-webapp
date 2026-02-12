@@ -5,6 +5,7 @@ import Booking from './pages/Booking';
 import Queue from './pages/Queue';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import InstallPrompt from './components/InstallPrompt';
 import { API_URL } from './config';
 
 const PUBLIC_VAPID_KEY = 'BOXNhnfoL63FT3IJ4oAa0SLi-HmLMmFyezrOwMKA95kBGuCV3efkb4SmjI3FEAyd8jpQfqpxaG2XyfwxtN0eJzY';
@@ -77,6 +78,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
+      <InstallPrompt />
     </Router>
   );
 }
