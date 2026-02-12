@@ -25,45 +25,58 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+export async function subscribeUser() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('Push notifications not supported');
+    return null;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+
+    // Explicitly request permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.log('Permission not granted');
+      return null;
+    }
+
+    const existedSubscription = await registration.pushManager.getSubscription();
+    if (existedSubscription) {
+      // Refresh it on server just in case
+      await fetch(`${API_URL}/subscribe`, {
+        method: 'POST',
+        body: JSON.stringify({ subscription: existedSubscription }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return existedSubscription;
+    }
+
+    const newSubscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
+    });
+
+    console.log('New subscription added.');
+    await fetch(`${API_URL}/subscribe`, {
+      method: 'POST',
+      body: JSON.stringify({ subscription: newSubscription }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    return newSubscription;
+  } catch (e) {
+    console.error('Push error:', e);
+    return null;
+  }
+}
+
 function App() {
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      navigator.serviceWorker.ready.then(function (registration) {
-        if (!registration.pushManager) {
-          return;
-        }
-
-        registration.pushManager.getSubscription().then(function (existedSubscription) {
-          if (existedSubscription === null) {
-            console.log('No subscription detected, make a request.');
-            registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
-            }).then(function (newSubscription) {
-              console.log('New subscription added.');
-              // Send to server
-              fetch(`${API_URL}/subscribe`, {
-                method: 'POST',
-                body: JSON.stringify({ subscription: newSubscription }),
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              });
-            }).catch(function (e) {
-              console.error('An error ocurred during the subscription process.', e);
-            });
-          } else {
-            console.log('Existed subscription detected.');
-            // Optionally resend to server to ensure it's up to date
-            fetch(`${API_URL}/subscribe`, {
-              method: 'POST',
-              body: JSON.stringify({ subscription: existedSubscription }),
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-          }
-        });
+    // Only register SW automatically, don't force subscribe here (unreliable on mobile)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        console.log('SW Ready');
       });
     }
   }, []);

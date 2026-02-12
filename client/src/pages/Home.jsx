@@ -4,6 +4,7 @@ import { Calendar, Users, MapPin, Instagram, Facebook, Clock } from 'lucide-reac
 import axios from 'axios';
 import io from 'socket.io-client';
 import { API_URL, SOCKET_URL } from '../config';
+import { subscribeUser } from '../App';
 
 const socket = io(SOCKET_URL);
 const BARBER_ID = 1; // Defaulting to Miloud
@@ -149,16 +150,13 @@ const Home = () => {
                     <p>© 2026 Look At Me Barbershop. All Rights Reserved.</p>
                     <button
                         onClick={async () => {
-                            if ('serviceWorker' in navigator) {
-                                const reg = await navigator.serviceWorker.ready;
-                                const sub = await reg.pushManager.getSubscription();
-                                if (sub) {
-                                    axios.post(`${API_URL}/test-push`, { subscription: sub })
-                                        .then(() => alert("Test lancé ! Fermez l'application maintenant pour tester l'arrière-plan (5s)."))
-                                        .catch(e => alert("Erreur: " + e.message));
-                                } else {
-                                    alert("Veuillez d'abord autoriser les notifications.");
-                                }
+                            const sub = await subscribeUser();
+                            if (sub) {
+                                axios.post(`${API_URL}/test-push`, { subscription: sub })
+                                    .then(() => alert("Test lancé ! Fermez l'application maintenant pour tester l'arrière-plan (5s)."))
+                                    .catch(e => alert("Erreur: " + e.message));
+                            } else {
+                                alert("Veuillez autoriser les notifications dans les réglages du site/téléphone.");
                             }
                         }}
                         className="text-[10px] uppercase tracking-tighter opacity-20 hover:opacity-100 transition-opacity"
