@@ -62,7 +62,13 @@ const Dashboard = () => {
             const activeQueue = bookingsRes.data.filter(b =>
                 b.barber_id === BARBER_ID &&
                 (b.status === 'waiting' || b.status === 'on_chair')
-            ).sort((a, b) => a.position - b.position); // Ensure correct order by position
+            ).sort((a, b) => {
+                // Priority 1: On Chair at the top
+                if (a.status === 'on_chair' && b.status !== 'on_chair') return -1;
+                if (b.status === 'on_chair' && a.status !== 'on_chair') return 1;
+                // Priority 2: Position for waiting clients
+                return (a.position || 0) - (b.position || 0);
+            });
 
             setQueue(activeQueue);
             setClients(clientsRes.data);
@@ -249,6 +255,9 @@ const Dashboard = () => {
                         <div className="bg-dark-lighter border border-white/5">
                             <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
                                 <h3 className="font-bold uppercase tracking-widest text-sm">File de passage</h3>
+                                {queue.some(b => b.status === 'on_chair') && (
+                                    <span className="text-[10px] font-black uppercase text-gold-500 animate-pulse">Session en cours</span>
+                                )}
                             </div>
                             <div className="divide-y divide-white/5">
                                 {queue.length === 0 ? (
@@ -272,7 +281,18 @@ const Dashboard = () => {
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
-                                                {item.status === 'waiting' && <button onClick={() => handleAction(item.id, 'call')} className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-gold-500 hover:text-black hover:border-gold-500 text-white font-black text-[10px] uppercase tracking-widest transition-all">Appeler</button>}
+                                                {item.status === 'waiting' && (
+                                                    <button
+                                                        onClick={() => handleAction(item.id, 'call')}
+                                                        disabled={queue.some(b => b.status === 'on_chair')}
+                                                        className={`px-6 py-3 border border-white/10 font-black text-[10px] uppercase tracking-widest transition-all ${queue.some(b => b.status === 'on_chair')
+                                                            ? 'bg-white/5 text-gray-600 cursor-not-allowed'
+                                                            : 'bg-white/5 text-white hover:bg-gold-500 hover:text-black hover:border-gold-500'
+                                                            }`}
+                                                    >
+                                                        Appeler
+                                                    </button>
+                                                )}
                                                 {item.status === 'on_chair' && <button onClick={() => handleAction(item.id, 'finish')} className="px-6 py-3 bg-green-500 text-black font-black text-[10px] uppercase tracking-widest hover:bg-green-600 transition-all">Terminer</button>}
                                                 <button onClick={() => handleAction(item.id, 'cancel')} className="p-3 border border-white/10 hover:bg-red-500 text-gray-500 hover:text-white transition-all"><X size={16} /></button>
                                             </div>
