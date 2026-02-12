@@ -54,16 +54,32 @@ router.post('/auth/login', (req, res) => {
 });
 
 // --- NOTIFICATIONS ---
+// Push notification subscription
 router.post('/subscribe', (req, res) => {
     const { subscription, clientId } = req.body;
     try {
+        const keys = JSON.stringify(subscription.keys);
         db.prepare('INSERT OR REPLACE INTO Subscriptions (client_id, endpoint, keys) VALUES (?, ?, ?)')
-            .run(clientId || null, subscription.endpoint, JSON.stringify(subscription.keys));
-        res.status(201).json({ success: true });
+            .run(clientId || null, subscription.endpoint, keys);
+        res.status(201).json({});
     } catch (err) {
-        console.error('Subscription Error:', err);
         res.status(500).json({ error: err.message });
     }
+});
+
+// Test push notification (delayed 5s)
+router.post('/test-push', async (req, res) => {
+    const { subscription } = req.body;
+    res.json({ message: 'Push test scheduled in 5s...' });
+
+    setTimeout(() => {
+        const { sendPush } = require('../services/notification');
+        sendPush([{ id: 'test', endpoint: subscription.endpoint, keys: JSON.stringify(subscription.keys) }], {
+            title: "Test Réussi ! 🔔",
+            body: "Ceci est une notification de test reçue en arrière-plan.",
+            url: "/"
+        });
+    }, 5000);
 });
 
 // --- QUEUE MANAGEMENT ---

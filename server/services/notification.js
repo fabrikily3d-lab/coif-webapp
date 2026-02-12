@@ -59,14 +59,14 @@ const notifyQueueUpdate = (barberId) => {
                 payload = {
                     title: "C'est presque à vous !",
                     body: "Vous êtes le prochain. Merci de vous présenter au salon.",
-                    icon: "/pwa-192x192.png",
+                    icon: "/vite.svg",
                     url: "/"
                 };
             } else if (position === 2) {
                 payload = {
                     title: "Bientôt votre tour",
                     body: "Plus que 2 personnes avant vous. Préparez-vous !",
-                    icon: "/pwa-192x192.png",
+                    icon: "/vite.svg",
                     url: "/"
                 };
             }

@@ -145,8 +145,26 @@ const Home = () => {
                         </div>
                     </div>
                 </div>
-                <div className="max-w-6xl mx-auto mt-20 pt-8 border-t border-white/5 text-center text-gray-600 text-sm">
-                    © 2026 Look At Me Barbershop. All Rights Reserved.
+                <div className="max-w-6xl mx-auto mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-gray-600 text-sm">
+                    <p>© 2026 Look At Me Barbershop. All Rights Reserved.</p>
+                    <button
+                        onClick={async () => {
+                            if ('serviceWorker' in navigator) {
+                                const reg = await navigator.serviceWorker.ready;
+                                const sub = await reg.pushManager.getSubscription();
+                                if (sub) {
+                                    axios.post(`${API_URL}/test-push`, { subscription: sub })
+                                        .then(() => alert("Test lancé ! Fermez l'application maintenant pour tester l'arrière-plan (5s)."))
+                                        .catch(e => alert("Erreur: " + e.message));
+                                } else {
+                                    alert("Veuillez d'abord autoriser les notifications.");
+                                }
+                            }
+                        }}
+                        className="text-[10px] uppercase tracking-tighter opacity-20 hover:opacity-100 transition-opacity"
+                    >
+                        Tester les Notifications
+                    </button>
                 </div>
             </footer>
         </div>
